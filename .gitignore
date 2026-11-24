@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+web/dev-dist/
+*.tsbuildinfo
+
+# runtime data (database, uploads, generated keys)
+data/
+server/data/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# logs / misc
+*.log
+.DS_Store
+Thumbs.db
+
+# legacy runtime artefacts
+legacy/**/php-error.log
+legacy/uploads/*
+!legacy/uploads/.gitkeep
+
+# local tooling
+.remember/
+.php_test_env/

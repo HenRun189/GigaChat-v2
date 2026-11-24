@@ -1,0 +1,60 @@
+<?php
+session_start();
+$debug = (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === 1 && isset($_GET['debug']));
+error_reporting(E_ALL);
+ini_set('display_errors', $debug ? '1' : '0');
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/php-error.log');
+
+if(!isset($_SESSION['user_id'])) exit;
+
+$user_id = intval($_SESSION['user_id']);
+$group_id = isset($_GET['group_id']) ? intval($_GET['group_id']) : 0;
+
+require_once __DIR__ . '/../../core/db.php';
+try {
+    $conn = get_db();
+} catch (RuntimeException $e) {
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['error' => 'db_error']);
+    exit;
+}
+
+// Sicherheit: nur Mitglieder dürfen die Mitglieder einer Gruppe sehen
+$memberCheck = $conn->prepare("SELECT 1 FROM group_members WHERE group_id = ? AND user_id = ? LIMIT 1");
+$memberCheck->bind_param("ii", $group_id, $user_id);
+$memberCheck->execute();
+$memberCheck->store_result();
+if ($memberCheck->num_rows === 0) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['error' => 'forbidden']);
+    $memberCheck->close();
+    $conn->close();
+    exit;
+}
+$memberCheck->close();
+
+$sql = "
+    SELECT u.id, u.username, ua.alias, u.color, u.emoji
+    FROM group_members gm
+    JOIN users u ON gm.user_id = u.id
+    LEFT JOIN user_aliases ua 
+        ON ua.owner_id = ? AND ua.target_id = u.id
+    WHERE gm.group_id = ?
+";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("ii", $user_id, $group_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$members = [];
+while($row = $result->fetch_assoc()){
+    $members[] = $row;
+}
+$stmt->close();
+$conn->close();
+
+header('Content-Type: application/json');
+echo json_encode($members);

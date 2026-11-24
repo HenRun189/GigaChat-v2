@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gigachat",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@gigachat/server", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "web-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@gigachat/web", "dev"],
+      "port": 5173
+    }
+  ]
+}
